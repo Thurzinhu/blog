@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView
 from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
+from taggit.models import Tag
 from .forms import EmailPostForm, CommentForm
 from .models import Post
 
@@ -24,23 +25,23 @@ def post_share(request, post_id):
     if (request.method == 'POST'):
         form = EmailPostForm(request.POST)
         if form.is_valid():
-            cd = form.cleaned_data
+            cleaned_data = form.cleaned_data
             post_url = request.build_absolute_uri(
                 post.get_absolute_url()
             )
             subject = (
-                f"{cd['name']} ({cd['email']}) "
+                f"{cleaned_data['name']} ({cleaned_data['email']}) "
                 f"recommends you read {post.title}"
             )
             message = (
                 f"Read {post.title} at {post_url}\n\n"
-                f"{cd['name']}\'s comments: {cd['comments']}"
+                f"{cleaned_data['name']}\'s comments: {cleaned_data['comments']}"
             )
             send_mail(
                 subject,
                 message,
                 from_email=None,
-                recipient_list=[cd['to']]
+                recipient_list=[cleaned_data['to']]
             )
             sent = True
     else:
@@ -54,7 +55,6 @@ def post_share(request, post_id):
             'sent': sent
         }
     )
-
 
 
 @require_POST
@@ -80,8 +80,12 @@ def post_comment(request, post_id):
     )
 
 
-def post_list(request):
+def post_list(request, tag_slug=None):
     post_list = Post.published.all()
+    tag = None
+    if tag_slug:
+        tag = get_object_or_404(Tag, slug=tag_slug)
+        post_list = post_list.filter(tags__in=[tag])
     paginator = Paginator(post_list, 3)
     page_number = request.GET.get('page', 1)
     try:
@@ -93,7 +97,10 @@ def post_list(request):
     return render(
         request,
         'blog/post/list.html',
-        {'posts': posts}
+        {
+            'posts': posts,
+            'tag': tag
+        }
     )
 
 
