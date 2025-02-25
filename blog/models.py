@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.db.models import Count
 from django.urls import reverse
 from django.utils import timezone
 from taggit.managers import TaggableManager
@@ -62,6 +63,20 @@ class Post(models.Model):
             ]
         )
     
+
+    def get_similar_posts(self):
+        post_tags_ids = self.tags.values_list('id', flat=True)
+        return Post.published.filter(
+            tags__in=post_tags_ids
+        ).exclude(
+            pk=self.id
+        ).alias(
+            similarity=Count('tags')
+        ).order_by(
+            '-similarity',
+            '-publish'
+        )
+
 
 class Comment(models.Model):
     created = models.DateTimeField(auto_now_add=True)

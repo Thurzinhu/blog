@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404
 from django.views.generic import ListView
 from django.views.decorators.http import require_POST
 from django.core.mail import send_mail
+from django.db.models import Count
 from taggit.models import Tag
 from .forms import EmailPostForm, CommentForm
 from .models import Post
@@ -120,6 +121,7 @@ def post_detail(request, year, month, day, post):
         {
             'post': post,
             'form': form,
-            'comments': comments
+            'comments': comments,
+            'similar_posts': post.get_similar_posts()[:4]
         }
     )
