@@ -2,8 +2,8 @@ services:
   web:
     build: .
     env_file: .env
-  volumes:
-    - .:/usr/src/app
+    volumes:
+      - .:/usr/src/app
   
   web_migrate:
       extends:
@@ -20,6 +20,8 @@ services:
     depends_on:
       - db
       - web_migrate
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: on-failure
 
   db:
     image: postgres:16.2
