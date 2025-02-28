@@ -1,0 +1,33 @@
+services:
+  web:
+    build: .
+    env_file: .env
+    volumes:
+      - .:/usr/src/app
+  
+  web_migrate:
+      extends:
+        service: web
+      depends_on:
+        - db
+      command: python manage.py migrate
+  
+  web_run:
+    extends:
+      service: web
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - web_migrate
+    command: python manage.py runserver 0.0.0.0:8000
+    restart: on-failure
+
+  db:
+    image: postgres:16.2
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+    env_file: .env
+
+volumes:
+  postgres-data:
